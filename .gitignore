@@ -1,0 +1,7 @@
+.env
+node_modules/
+venv/
+.vercel/
+*.bak
+*.log
+.DS_Store

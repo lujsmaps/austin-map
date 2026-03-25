@@ -1,0 +1,14 @@
+{
+  "name": "austin-vc-startup-map",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Interactive map of Austin startups and VC firms",
+  "private": true,
+  "scripts": {
+    "ingest": "node scripts/ingest.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0",
+    "exa-js": "^1.4.0"
+  }
+}
