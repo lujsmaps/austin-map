@@ -1,13 +1,15 @@
 import Exa from "exa-js";
 import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from "next/server";
 
-// Vercel Cron Job Handler
-export default async function handler(req, res) {
-    // 1. Verify Authorization (Vercel sets this for Crons)
-    // Optional but recommended for security: check for CRON_SECRET if you set one
-    // but Vercel handles internal cron security via the schedule config.
+export async function GET(req) {
+    // Check for Cron Secret if configured
+    const authHeader = req.headers.get('authorization');
+    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        return new Response('Unauthorized', { status: 401 });
+    }
 
-    console.log("🚀  Starting Daily Ingest via Vercel Cron");
+    console.log("🚀 Starting Daily Ingest via Next.js API Route");
 
     const exa = new Exa(process.env.EXA_API_KEY);
     const supabase = createClient(
@@ -42,7 +44,7 @@ export default async function handler(req, res) {
         for (const q of QUERIES) {
             const response = await exa.searchAndContents(q.query, {
                 category: "company",
-                numResults: 10, // Keep it light for serverless execution limits
+                numResults: 10,
                 contents: {
                     text: { maxCharacters: 1000 },
                     summary: true,
@@ -76,7 +78,6 @@ export default async function handler(req, res) {
 
                 if (!error && data) {
                     totalInserted++;
-                    // Also save raw result to audit log
                     await supabase.from("exa_search_results").insert({
                         organization_id: data.id,
                         query_used: q.query,
@@ -89,7 +90,7 @@ export default async function handler(req, res) {
             }
         }
 
-        return res.status(200).json({
+        return NextResponse.json({
             success: true,
             inserted: totalInserted,
             message: `Successfully processed ${totalInserted} entries.`
@@ -97,6 +98,6 @@ export default async function handler(req, res) {
 
     } catch (error) {
         console.error("Cron Ingest Error:", error);
-        return res.status(500).json({ success: false, error: error.message });
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
