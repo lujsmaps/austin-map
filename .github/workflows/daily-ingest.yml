@@ -1,0 +1,30 @@
+name: Daily Startup & VC Ingest
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # Run daily at 6 AM UTC
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Ingest Script
+        env:
+          EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: node scripts/ingest.mjs
